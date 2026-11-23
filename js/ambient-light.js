@@ -88,7 +88,7 @@ void main(){
   const uniforms={resolution:loc('resolution'),time:loc('time'),scroll:loc('scroll'),depth:loc('depth'),intensity:loc('intensity'),motion:loc('motion'),mode:loc('mode'),seed:loc('seed'),variation:loc('variation'),beamWidth:loc('beamWidth'),
     paletteA:loc('paletteA'),paletteB:loc('paletteB'),paletteC:loc('paletteC')};
   const attr=gl.getAttribLocation(program,'p');gl.enableVertexAttribArray(attr);gl.vertexAttribPointer(attr,2,gl.FLOAT,false,0,0);
-  const state={mode:0,depth:.53,direction:1,intensity:1.05,motion:.35,seed:Math.random()*10+1,variation:.65,beamWidth:1.05,palette:[[.78,.82,.82],[.82,.74,.62],[.94,.91,.85]]};
+  const state={mode:0,depth:.53,direction:1,intensity:1.05,motion:.35,seed:Math.random()*10+1,variation:.65,beamWidth:1.05,palette:[[.78,.82,.82],[.82,.74,.62],[.94,.91,.85]],targetPalette:[[.78,.82,.82],[.82,.74,.62],[.94,.91,.85]]};
   const reduce=matchMedia('(prefers-reduced-motion: reduce)');
   let last=0, scroll=0, targetScroll=0, running=true;
   function resize(){
@@ -120,7 +120,10 @@ void main(){
     gl.uniform1f(uniforms.seed,state.seed);
     gl.uniform1f(uniforms.variation,state.variation);
     gl.uniform1f(uniforms.beamWidth,state.beamWidth);
-    for(let i=0;i<3;i++)gl.uniform3fv(uniforms[['paletteA','paletteB','paletteC'][i]],state.palette[i]);
+    for(let i=0;i<3;i++){
+      for(let j=0;j<3;j++)state.palette[i][j]+=(state.targetPalette[i][j]-state.palette[i][j])*.045;
+      gl.uniform3fv(uniforms[['paletteA','paletteB','paletteC'][i]],state.palette[i]);
+    }
     gl.drawArrays(gl.TRIANGLE_STRIP,0,4);
   }
   window.rosadoLight={
@@ -130,7 +133,7 @@ void main(){
     setVariation:n=>{state.variation=Math.max(0,Math.min(1,Number(n)||0));},
     setBeamWidth:n=>{state.beamWidth=Math.max(.55,Math.min(2.0,Number(n)||1));},
     randomize:()=>{state.seed=Math.random()*20+1;},
-    setPalette:colors=>{if(Array.isArray(colors)&&colors.length===3)state.palette=colors;}
+    setPalette:colors=>{if(Array.isArray(colors)&&colors.length===3)state.targetPalette=colors.map(rgb=>rgb.map(c=>Math.min(1,Math.max(0,Number(c)||0))));}
   };
   document.documentElement.dataset.shader='live';
   resize();requestAnimationFrame(frame);
