@@ -1,0 +1,37 @@
+name: Publish sanitized preview to GitHub Pages
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: pages
+  cancel-in-progress: true
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify public-only files
+        shell: bash
+        run: |
+          set -eu
+          test -f index.html
+          test -f robots.txt
+          test -f js/ambient-light.js
+          test -f js/touch-preview.js
+          for i in 01 02 03 04 05 06; do test -f "work/study-$i/index.html"; done
+          ! grep -iEq 'Diageo|Johnnie Walker|Blue Label|Mercedes-AMG|Balenciaga|Christian Dior' index.html
+          ! find . -type f \( -iname '*.webp' -o -iname '*.jpg' -o -iname '*.png' \) | grep -q .
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: .
+      - id: deployment
+        uses: actions/deploy-pages@v4
