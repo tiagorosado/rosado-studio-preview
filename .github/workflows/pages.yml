@@ -26,11 +26,14 @@ jobs:
           test -f robots.txt
           test -f js/ambient-light.js
           test -f js/touch-preview.js
+          test -f js/palette-memory.js
+          node --check js/palette-memory.js
           node --check js/ambient-light.js
           node --check js/touch-preview.js
           test -f style.css
           grep -q 'noindex,nofollow' index.html
           grep -q 'light-variation' index.html
+          grep -q 'js/palette-memory.js' index.html
           grep -q '/rosado-studio-preview/' index.html
           for i in 01 02 03 04 05 06; do
             test -f "work/study-$i/index.html"
