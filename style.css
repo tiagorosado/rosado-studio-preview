@@ -109,3 +109,20 @@ linear-gradient(126deg,rgba(250,242,217,.82),rgba(89,102,97,.03) 48%,rgba(43,58,
 .work{padding-top:85px}.work h2{font-size:clamp(46px,12vw,64px)}
 }
 @media(prefers-reduced-motion:reduce){.project-media:before{transition:none}}
+
+
+/* V26 light-lab controls: accessible, compact, usable on touch */
+.light-lab{gap:11px;max-height:min(74dvh,680px);overflow-y:auto}
+.light-lab input[type=range]{width:100%;cursor:pointer;min-height:18px}
+.light-lab label{display:block;font-weight:500;letter-spacing:.075em}
+.light-lab .light-check{display:flex;align-items:center;gap:9px;letter-spacing:0;font-size:12px}
+.light-check input{width:15px;height:15px;accent-color:#344751}
+.light-lab button{font:inherit;letter-spacing:.075em;padding:12px 9px;border:1px solid #50636c;color:#25343d;background:rgba(240,243,242,.95);cursor:pointer}
+.light-lab button:hover{background:#d8e2e3}
+.light-status{font-size:10px;letter-spacing:.11em;color:#617177}
+@media(max-width:700px){
+.light-lab{max-height:min(64dvh,460px);width:190px;padding:12px;gap:7px}
+.light-lab button{font-size:10px;padding:10px 7px}
+.light-lab .light-check{font-size:10px}
+.light-lab input[type=range]{min-height:24px}
+}
