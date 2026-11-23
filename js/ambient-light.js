@@ -14,6 +14,9 @@ uniform float scroll;
 uniform float depth;
 uniform float intensity;
 uniform float motion;
+uniform float seed;
+uniform float variation;
+uniform float beamWidth;
 uniform int mode;
 uniform vec3 paletteA;
 uniform vec3 paletteB;
@@ -33,12 +36,15 @@ void main(){
   vec3 rgb=vec3(.968,.961,.945);
   if(mode==0){
     // Optical Theatre: physically inspired aperture beams and soft occlusions.
-    float a=beam(p, .83+sin(t*.19)*.035, .16, .33);
-    float b=beam(p,-.62+cos(t*.15)*.045,-.25,.22);
-    float c=beam(p,.16,-.12+sin(t*.12)*.08,.46);
-    float shadow=field(p,vec2(-.1+sin(t*.1)*.07,.05),vec2(.42,.8));
-    rgb+=vec3(.075,.072,.063)*(a+b*.85+c*.7);
-    rgb-=vec3(.05,.053,.055)*shadow;
+    float va=variation * sin(seed*3.1 + .7);
+    float vb=variation * cos(seed*2.7 + 2.1);
+    float vc=variation * sin(seed*4.8 + 1.3);
+    float a=beam(p, .83+sin(t*.19)*.035+va*.26, .16+vb*.23, .33*beamWidth);
+    float b=beam(p,-.62+cos(t*.15)*.045+vb*.24,-.25+vc*.21,.22*beamWidth);
+    float c=beam(p,.16+vc*.28,-.12+va*.18+sin(t*.12)*.08,.46*beamWidth);
+    float shadow=field(p,vec2(-.1+va*.16+sin(t*.1)*.07,.05+vb*.13),vec2(.42,.8));
+    rgb+=vec3(.14,.133,.118)*(a+b*.88+c*.75);
+    rgb-=vec3(.085,.089,.092)*shadow;
   } else if(mode==1){
     // Three-tone colour memory, with deliberately separated diffuse lobes.
     float a=field(p,vec2(-.65+sin(t*.18)*.13,.35),vec2(.8,.78));
@@ -49,8 +55,8 @@ void main(){
     rgb=mix(rgb,paletteC,c*.22*intensity);
   } else {
     // Prism light: irregular refracted-light fold, not a static ring texture.
-    p.x+=.09*sin(p.y*5.+t*.7)+.04*sin(p.y*11.-t*.4);
-    float f=sin(p.x*9. + 2.4*sin(p.y*3.1+t*.3));
+    p.x+=.09*sin(p.y*(5.+variation)+t*.7+seed)+.04*sin(p.y*11.-t*.4+seed*.3);
+    float f=sin(p.x*(9.+variation*1.7) + 2.4*sin(p.y*3.1+t*.3+seed*.15));
     float fold=pow(1.-abs(f),12.);
     float envelope=field(p,vec2(.1,.0),vec2(1.2,.95));
     float d=fold*envelope;
@@ -79,10 +85,10 @@ void main(){
   gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,1,1]),gl.STATIC_DRAW);
   gl.useProgram(program);
   const loc=(n)=>gl.getUniformLocation(program,n);
-  const uniforms={resolution:loc('resolution'),time:loc('time'),scroll:loc('scroll'),depth:loc('depth'),intensity:loc('intensity'),motion:loc('motion'),mode:loc('mode'),
+  const uniforms={resolution:loc('resolution'),time:loc('time'),scroll:loc('scroll'),depth:loc('depth'),intensity:loc('intensity'),motion:loc('motion'),mode:loc('mode'),seed:loc('seed'),variation:loc('variation'),beamWidth:loc('beamWidth'),
     paletteA:loc('paletteA'),paletteB:loc('paletteB'),paletteC:loc('paletteC')};
   const attr=gl.getAttribLocation(program,'p');gl.enableVertexAttribArray(attr);gl.vertexAttribPointer(attr,2,gl.FLOAT,false,0,0);
-  const state={mode:0,depth:.25,intensity:1.0,motion:.4,palette:[[.78,.82,.82],[.82,.74,.62],[.94,.91,.85]]};
+  const state={mode:0,depth:.53,direction:1,intensity:1.05,motion:.35,seed:Math.random()*10+1,variation:.65,beamWidth:1.05,palette:[[.78,.82,.82],[.82,.74,.62],[.94,.91,.85]]};
   const reduce=matchMedia('(prefers-reduced-motion: reduce)');
   let last=0, scroll=0, targetScroll=0, running=true;
   function resize(){
@@ -106,17 +112,24 @@ void main(){
     gl.useProgram(program);
     gl.uniform2f(uniforms.resolution,canvas.width,canvas.height);
     gl.uniform1f(uniforms.time,reduce.matches?0:now/1000);
-    gl.uniform1f(uniforms.scroll,reduce.matches?0:scroll*.07);
+    gl.uniform1f(uniforms.scroll,reduce.matches?0:scroll*.07*state.direction);
     gl.uniform1f(uniforms.depth,reduce.matches?0:state.depth);
     gl.uniform1f(uniforms.intensity,state.intensity);
     gl.uniform1f(uniforms.motion,reduce.matches?0:state.motion);
     gl.uniform1i(uniforms.mode,state.mode);
+    gl.uniform1f(uniforms.seed,state.seed);
+    gl.uniform1f(uniforms.variation,state.variation);
+    gl.uniform1f(uniforms.beamWidth,state.beamWidth);
     for(let i=0;i<3;i++)gl.uniform3fv(uniforms[['paletteA','paletteB','paletteC'][i]],state.palette[i]);
     gl.drawArrays(gl.TRIANGLE_STRIP,0,4);
   }
   window.rosadoLight={
     setMode:n=>{state.mode=Math.max(0,Math.min(2,Number(n)||0));},
     setDepth:n=>{state.depth=Math.max(0,Math.min(1,Number(n)||0));},
+    setDirection:v=>{state.direction=v===-1||v==='-1'?-1:1;},
+    setVariation:n=>{state.variation=Math.max(0,Math.min(1,Number(n)||0));},
+    setBeamWidth:n=>{state.beamWidth=Math.max(.55,Math.min(2.0,Number(n)||1));},
+    randomize:()=>{state.seed=Math.random()*20+1;},
     setPalette:colors=>{if(Array.isArray(colors)&&colors.length===3)state.palette=colors;}
   };
   document.documentElement.dataset.shader='live';
