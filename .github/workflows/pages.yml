@@ -39,6 +39,9 @@ jobs:
             test -f "work/study-$i/index.html"
             grep -q 'noindex,nofollow' "work/study-$i/index.html"
             grep -q 'light-variation' "work/study-$i/index.html"
+            grep -q 'case-chapter-grid' "work/study-$i/index.html"
+            grep -q 'case-next' "work/study-$i/index.html"
+            grep -q 'case-fact-grid' "work/study-$i/index.html"
           done
           ! grep -iEql 'Diageo|Johnnie Walker|Blue Label|Mercedes-AMG|Balenciaga|Christian Dior' -- *.html work/study-*/index.html
           ! grep -iEq 'Diageo|Johnnie Walker|Blue Label|Mercedes-AMG|Balenciaga|Christian Dior' index.html
